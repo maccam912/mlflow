@@ -26,7 +26,16 @@ class S3ArtifactRepository(ArtifactRepository):
     def _get_s3_client(self):
         import boto3
         s3_endpoint_url = os.environ.get('MLFLOW_S3_ENDPOINT_URL')
-        return boto3.client('s3', endpoint_url=s3_endpoint_url)
+        session = {}
+        if "AWS_SESSION_TOKEN" in os.environ:
+            session = boto3.session.Session(
+                aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
+                aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY'),
+                aws_session_token=os.environ.get('AWS_SESSION_TOKEN')
+            )
+        else:
+            session = boto3.session.Session()
+        return session.client('s3', endpoint_url=s3_endpoint_url)
 
     def log_artifact(self, local_file, artifact_path=None):
         (bucket, dest_path) = data.parse_s3_uri(self.artifact_uri)
